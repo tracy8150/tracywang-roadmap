@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老脆的Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14121A;
+    --text:#F2EEF3;
+    --text-soft:#C3BCC9;
+    --text-mute:#8B8390;
+    --ext:#C99BD9;
+    --ext-glow:#9B6BC4;
+    --int:#8FC4D9;
+    --int-glow:#5B9FBF;
+    --amber:#E8B96A;
+    --red:#D97878;
+    --green:#8FBF8A;
+    --gray:#6B6570;
+    --line:rgba(255,255,255,0.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans TC',sans-serif;
+    line-height:1.7;
+    padding-bottom:6rem;
+    overflow-x:hidden;
+  }
+  .bg-blob{
+    position:fixed;border-radius:50%;filter:blur(90px);opacity:0.3;z-index:0;pointer-events:none;
+  }
+  .b1{width:600px;height:600px;background:var(--ext-glow);top:-10%;left:-10%}
+  .b2{width:500px;height:500px;background:var(--int-glow);top:35%;right:-15%}
+  .b3{width:450px;height:450px;background:var(--amber);bottom:-10%;left:20%;opacity:0.18}
+
+  header{
+    position:relative;z-index:1;
+    max-width:920px;margin:0 auto;padding:4rem 24px 2.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.14em;
+    color:var(--amber);text-transform:uppercase;margin-bottom:1rem;
+  }
+  h1{
+    font-family:'Noto Serif TC',serif;font-weight:700;
+    font-size:clamp(26px,4.5vw,38px);
+  }
+  .back{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);
+    text-decoration:none;margin-top:1.2rem;
+  }
+
+  main{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:0 24px}
+  section{margin-top:3rem}
+  .section-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-mute);margin-bottom:14px;
+  }
+
+  .glass{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:24px 26px;
+  }
+
+  /* Life countdown */
+  .life-numbers{display:flex;gap:32px;flex-wrap:wrap;margin-bottom:20px}
+  .life-stat .num{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;color:var(--text);
+  }
+  .life-stat .label{font-size:12px;color:var(--text-mute);margin-top:4px}
+  .life-bar-track{
+    position:relative;height:14px;border-radius:10px;
+    background:rgba(255,255,255,0.08);overflow:hidden;
+  }
+  .life-bar-fill{
+    height:100%;border-radius:10px;
+    background:linear-gradient(90deg, var(--ext-glow), var(--amber));
+    width:0%;
+    transition:width 1.2s ease;
+  }
+  .life-bar-marker{
+    position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--text);
+    left:0%;
+  }
+  .life-labels{display:flex;justify-content:space-between;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mute)}
+
+  /* Stuck warning */
+  .stuck-list{display:flex;flex-direction:column;gap:10px}
+  .stuck-item{
+    display:flex;align-items:center;gap:12px;
+    background:rgba(217,120,120,0.1);
+    border:1px solid rgba(217,120,120,0.35);
+    border-radius:12px;padding:14px 18px;
+  }
+  .stuck-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 10px var(--red)}
+  .stuck-text{font-size:14px}
+  .stuck-cat{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);
+    text-transform:uppercase;letter-spacing:0.05em;margin-right:8px;
+  }
+  .empty-state{
+    color:var(--text-mute);font-size:13px;font-family:'JetBrains Mono',monospace;
+    padding:16px 0;
+  }
+
+  /* Progress bars */
+  .progress-row{margin-bottom:18px}
+  .progress-row:last-child{margin-bottom:0}
+  .progress-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .progress-head .name{color:var(--text-soft)}
+  .progress-head .frac{font-family:'JetBrains Mono',monospace;color:var(--text-mute)}
+  .progress-track{
+    height:10px;border-radius:8px;background:rgba(255,255,255,0.08);
+    overflow:hidden;display:flex;
+  }
+  .seg{height:100%}
+  .seg.done{background:var(--green)}
+  .seg.progress{background:var(--int)}
+  .seg.stuck{background:var(--red)}
+  .seg.notstarted{background:var(--gray)}
+  .seg.frozen{background:rgba(255,255,255,0.15)}
+
+  .legend-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:11px;color:var(--text-mute);font-family:'JetBrains Mono',monospace}
+  .legend-row span{display:inline-flex;align-items:center;gap:6px}
+  .legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  footer{
+    position:relative;z-index:1;max-width:920px;margin:3rem auto 0;padding:2rem 24px 0;
+    font-size:12px;color:var(--text-mute);font-family:'JetBrains Mono',monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-blob b1"></div>
+<div class="bg-blob b2"></div>
+<div class="bg-blob b3"></div>
+
+<header>
+  <div class="eyebrow">Dashboard · Status Report</div>
+  <h1>老脆的行動儀表板</h1>
+  <a class="back" href="index.html">← 回到roadmap</a>
+</header>
+
+<main>
+
+  <section>
+    <div class="section-label">人生倒數</div>
+    <div class="glass">
+      <div class="life-numbers">
+        <div class="life-stat"><div class="num" id="ageNow">—</div><div class="label">現在</div></div>
+        <div class="life-stat"><div class="num" id="ageLeft">—</div><div class="label">剩餘年數</div></div>
+        <div class="life-stat"><div class="num" id="decadesLeft">—</div><div class="label">剩幾個十年</div></div>
+        <div class="life-stat"><div class="num" id="pctElapsed">—</div><div class="label">已走完</div></div>
+      </div>
+      <div class="life-bar-track">
+        <div class="life-bar-fill" id="lifeBarFill"></div>
+      </div>
+      <div class="life-labels"><span>0歲</span><span>55歲（設定終點）</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">卡住警示</div>
+    <div class="glass">
+      <div id="stuckList" class="stuck-list"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">整體行動狀態</div>
+    <div class="glass">
+      <div class="progress-row">
+        <div class="progress-head">
+          <span class="name">全部行動項目</span>
+          <span class="frac" id="overallFrac">—</span>
+        </div>
+        <div class="progress-track" id="overallBar"></div>
+      </div>
+      <div class="legend-row">
+        <span><i class="legend-dot" style="background:var(--green)"></i>完成 Done</span>
+        <span><i class="legend-dot" style="background:var(--int)"></i>進行中 In Progress</span>
+        <span><i class="legend-dot" style="background:var(--red)"></i>卡住 Stuck</span>
+        <span><i class="legend-dot" style="background:var(--gray)"></i>未開始 Not Started</span>
+        <span><i class="legend-dot" style="background:rgba(255,255,255,0.3)"></i>凍結 Frozen</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">依種類拆解</div>
+    <div class="glass" id="categoryBars"></div>
+  </section>
+
+  <section>
+    <div class="section-label">內容完成度</div>
+    <div class="glass">
+      <div class="progress-row">
+        <div class="progress-head">
+          <span class="name">Posts 全文撰寫進度</span>
+          <span class="frac" id="postsFrac">—</span>
+        </div>
+        <div class="progress-track" id="postsBar"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer></footer>
+
+<script>
+// ====== 人生倒數設定 ======
+const CURRENT_AGE = 32;
+const RETIREMENT_AGE = 55;
+// ==========================
+
+const SHEET_ID = '1FC4GitJvxBG0dNQorjmMXvPk4iFa8rdIqZB7oUPMAUs';
+const EVENTS_GID = '0';
+const ACTIONS_GID = '387283646';
+const POSTS_GID = '1388296368';
+
+function csvUrl(gid){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field+='"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\n' || c === '\r'){
+        if(c==='\r' && next==='\n') i++;
+        row.push(field); rows.push(row); row=[]; field='';
+      } else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(v => v && v.trim().length));
+}
+function rowsToObjects(rows){
+  const [header, ...data] = rows;
+  return data.map(r => {
+    const obj = {};
+    header.forEach((h,i) => obj[h] = (r[i] || '').trim());
+    return obj;
+  });
+}
+
+// ---- 人生倒數 ----
+function renderLife(){
+  const left = RETIREMENT_AGE - CURRENT_AGE;
+  const decades = (left / 10).toFixed(1);
+  const pct = (CURRENT_AGE / RETIREMENT_AGE * 100).toFixed(1);
+  document.getElementById('ageNow').textContent = CURRENT_AGE + '歲';
+  document.getElementById('ageLeft').textContent = left + '年';
+  document.getElementById('decadesLeft').textContent = decades + '個十年';
+  document.getElementById('pctElapsed').textContent = pct + '%';
+  requestAnimationFrame(() => {
+    document.getElementById('lifeBarFill').style.width = pct + '%';
+  });
+}
+
+const STATUS_LABELS = {
+  'Done': {label:'完成', cls:'done'},
+  'In Progress': {label:'進行中', cls:'progress'},
+  'Stuck': {label:'卡住', cls:'stuck'},
+  'Not Started': {label:'未開始', cls:'notstarted'},
+  'Frozen': {label:'凍結', cls:'frozen'}
+};
+
+function buildBar(container, counts, total){
+  container.innerHTML = '';
+  ['Done','In Progress','Stuck','Not Started','Frozen'].forEach(status => {
+    const n = counts[status] || 0;
+    if(n === 0) return;
+    const seg = document.createElement('div');
+    seg.className = 'seg ' + STATUS_LABELS[status].cls;
+    seg.style.width = (n / total * 100) + '%';
+    container.appendChild(seg);
+  });
+}
+
+Promise.all([
+  fetch(csvUrl(ACTIONS_GID)).then(r => r.text()),
+  fetch(csvUrl(POSTS_GID)).then(r => r.text()),
+  fetch(csvUrl(EVENTS_GID)).then(r => r.text())
+]).then(([actionsText, postsText, eventsText]) => {
+  renderLife();
+
+  const actions = rowsToObjects(parseCSV(actionsText));
+  const posts = rowsToObjects(parseCSV(postsText));
+  const events = rowsToObjects(parseCSV(eventsText));
+
+  // 卡住警示
+  const stuck = actions.filter(a => a.Status === 'Stuck');
+  const stuckList = document.getElementById('stuckList');
+  if(!stuck.length){
+    stuckList.innerHTML = `<div class="empty-state">目前沒有卡住的項目。</div>`;
+  } else {
+    stuckList.innerHTML = stuck.map(a => `
+      <div class="stuck-item">
+        <span class="stuck-dot"></span>
+        <span class="stuck-text"><span class="stuck-cat">${a.Category || '未分類'}</span>${a.Action}</span>
+      </div>
+    `).join('');
+  }
+
+  // 整體狀態
+  const counts = {};
+  actions.forEach(a => {
+    const s = a.Status || 'Not Started';
+    counts[s] = (counts[s] || 0) + 1;
+  });
+  const total = actions.length || 1;
+  const doneCount = counts['Done'] || 0;
+  document.getElementById('overallFrac').textContent = `${doneCount} / ${actions.length} 完成`;
+  buildBar(document.getElementById('overallBar'), counts, total);
+
+  // 依種類拆解
+  const byCategory = {};
+  actions.forEach(a => {
+    const cat = a.Category || '未分類';
+    if(!byCategory[cat]) byCategory[cat] = {};
+    const s = a.Status || 'Not Started';
+    byCategory[cat][s] = (byCategory[cat][s] || 0) + 1;
+  });
+  const catContainer = document.getElementById('categoryBars');
+  catContainer.innerHTML = Object.keys(byCategory).map(cat => {
+    const catCounts = byCategory[cat];
+    const catTotal = Object.values(catCounts).reduce((a,b) => a+b, 0);
+    const done = catCounts['Done'] || 0;
+    const id = 'cat-' + cat.replace(/[^a-zA-Z0-9]/g, '');
+    return `
+      <div class="progress-row">
+        <div class="progress-head">
+          <span class="name">${cat}</span>
+          <span class="frac">${done} / ${catTotal}</span>
+        </div>
+        <div class="progress-track" id="${id}"></div>
+      </div>
+    `;
+  }).join('') || `<div class="empty-state">尚無行動清單資料。</div>`;
+
+  Object.keys(byCategory).forEach(cat => {
+    const id = 'cat-' + cat.replace(/[^a-zA-Z0-9]/g, '');
+    const el = document.getElementById(id);
+    const catCounts = byCategory[cat];
+    const catTotal = Object.values(catCounts).reduce((a,b) => a+b, 0);
+    if(el) buildBar(el, catCounts, catTotal);
+  });
+
+  // 內容完成度：每個事件最多兩篇（ext / int），已有Title或Content視為已撰寫
+  let expectedPosts = 0;
+  events.forEach(ev => {
+    if(ev.Ext_Title) expectedPosts++;
+    if(ev.Int_Title) expectedPosts++;
+  });
+  const writtenIds = new Set(
+    posts.filter(p => (p.Content && p.Content.trim()) || (p.title && p.title.trim()) || (p.Title && p.Title.trim()))
+         .map(p => p.ID)
+  );
+  const writtenCount = writtenIds.size;
+  document.getElementById('postsFrac').textContent = `${writtenCount} / ${expectedPosts || 1} 已撰寫`;
+  buildBar(document.getElementById('postsBar'),
+    { 'Done': writtenCount, 'Not Started': Math.max((expectedPosts || 1) - writtenCount, 0) },
+    expectedPosts || 1
+  );
+
+}).catch(err => {
+  document.querySelector('main').innerHTML =
+    `<p style="color:var(--text-mute);font-family:'JetBrains Mono',monospace;font-size:13px">讀取失敗：${err.message}</p>`;
+});
+</script>
+
+</body>
+</html>
