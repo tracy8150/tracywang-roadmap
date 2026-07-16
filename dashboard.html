@@ -135,6 +135,17 @@
   .legend-row span{display:inline-flex;align-items:center;gap:6px}
   .legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 
+  .cat-items{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .cat-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-soft)}
+  .cat-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .cat-item-dot.done{background:var(--green)}
+  .cat-item-dot.progress{background:var(--int)}
+  .cat-item-dot.stuck{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .cat-item-dot.notstarted{background:var(--gray)}
+  .cat-item-dot.frozen{background:rgba(255,255,255,0.3)}
+  .cat-item-name{flex:1}
+  .cat-item-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-mute)}
+
   footer{
     position:relative;z-index:1;max-width:920px;margin:3rem auto 0;padding:2rem 24px 0;
     font-size:12px;color:var(--text-mute);font-family:'JetBrains Mono',monospace;
@@ -286,6 +297,17 @@ const STATUS_LABELS = {
   'Frozen': {label:'凍結', cls:'frozen'}
 };
 
+// 同時支援中文/英文/大小寫不一致的Status值，統一轉成標準英文代碼
+function normalizeStatus(raw){
+  const v = (raw || '').trim().toLowerCase();
+  if(['done','完成','已完成'].includes(v)) return 'Done';
+  if(['in progress','inprogress','進行中','執行中'].includes(v)) return 'In Progress';
+  if(['stuck','卡住','卡關'].includes(v)) return 'Stuck';
+  if(['not started','notstarted','未開始','尚未開始'].includes(v)) return 'Not Started';
+  if(['frozen','凍結','已凍結'].includes(v)) return 'Frozen';
+  return 'Not Started';
+}
+
 function buildBar(container, counts, total){
   container.innerHTML = '';
   ['Done','In Progress','Stuck','Not Started','Frozen'].forEach(status => {
@@ -310,7 +332,7 @@ Promise.all([
   const events = rowsToObjects(parseCSV(eventsText));
 
   // 卡住警示
-  const stuck = actions.filter(a => a.Status === 'Stuck');
+  const stuck = actions.filter(a => normalizeStatus(a.Status) === 'Stuck');
   const stuckList = document.getElementById('stuckList');
   if(!stuck.length){
     stuckList.innerHTML = `<div class="empty-state">目前沒有卡住的項目。</div>`;
@@ -326,7 +348,7 @@ Promise.all([
   // 整體狀態
   const counts = {};
   actions.forEach(a => {
-    const s = a.Status || 'Not Started';
+    const s = normalizeStatus(a.Status);
     counts[s] = (counts[s] || 0) + 1;
   });
   const total = actions.length || 1;
@@ -334,20 +356,28 @@ Promise.all([
   document.getElementById('overallFrac').textContent = `${doneCount} / ${actions.length} 完成`;
   buildBar(document.getElementById('overallBar'), counts, total);
 
-  // 依種類拆解
+  // 依種類拆解：進度條 + 實際項目清單
   const byCategory = {};
   actions.forEach(a => {
     const cat = a.Category || '未分類';
-    if(!byCategory[cat]) byCategory[cat] = {};
-    const s = a.Status || 'Not Started';
-    byCategory[cat][s] = (byCategory[cat][s] || 0) + 1;
+    if(!byCategory[cat]) byCategory[cat] = { counts:{}, items:[] };
+    const s = normalizeStatus(a.Status);
+    byCategory[cat].counts[s] = (byCategory[cat].counts[s] || 0) + 1;
+    byCategory[cat].items.push({ action:a.Action, status:s });
   });
   const catContainer = document.getElementById('categoryBars');
   catContainer.innerHTML = Object.keys(byCategory).map(cat => {
-    const catCounts = byCategory[cat];
-    const catTotal = Object.values(catCounts).reduce((a,b) => a+b, 0);
-    const done = catCounts['Done'] || 0;
+    const data = byCategory[cat];
+    const catTotal = Object.values(data.counts).reduce((a,b) => a+b, 0);
+    const done = data.counts['Done'] || 0;
     const id = 'cat-' + cat.replace(/[^a-zA-Z0-9]/g, '');
+    const itemsHTML = data.items.map(it => `
+      <div class="cat-item">
+        <span class="cat-item-dot ${STATUS_LABELS[it.status].cls}"></span>
+        <span class="cat-item-name">${it.action}</span>
+        <span class="cat-item-status">${STATUS_LABELS[it.status].label}</span>
+      </div>
+    `).join('');
     return `
       <div class="progress-row">
         <div class="progress-head">
@@ -355,6 +385,7 @@ Promise.all([
           <span class="frac">${done} / ${catTotal}</span>
         </div>
         <div class="progress-track" id="${id}"></div>
+        <div class="cat-items">${itemsHTML}</div>
       </div>
     `;
   }).join('') || `<div class="empty-state">尚無行動清單資料。</div>`;
@@ -362,9 +393,9 @@ Promise.all([
   Object.keys(byCategory).forEach(cat => {
     const id = 'cat-' + cat.replace(/[^a-zA-Z0-9]/g, '');
     const el = document.getElementById(id);
-    const catCounts = byCategory[cat];
-    const catTotal = Object.values(catCounts).reduce((a,b) => a+b, 0);
-    if(el) buildBar(el, catCounts, catTotal);
+    const data = byCategory[cat];
+    const catTotal = Object.values(data.counts).reduce((a,b) => a+b, 0);
+    if(el) buildBar(el, data.counts, catTotal);
   });
 
   // 內容完成度：每個事件最多兩篇（ext / int），已有Title或Content視為已撰寫
