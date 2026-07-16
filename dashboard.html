@@ -91,6 +91,37 @@
   .full-item-title{font-family:'Noto Serif TC',serif;font-weight:600;font-size:15px}
   .full-item-content{font-size:13px;color:var(--text-soft);margin-top:6px;line-height:1.6}
   .full-item-sub{font-size:12px;color:var(--text-mute);margin-top:8px}
+
+  .stepper{
+    display:flex;align-items:flex-start;margin-top:16px;
+    max-width:280px;
+  }
+  .step-node-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+  .step-node{
+    width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;
+    background:rgba(255,255,255,0.06);
+    border:1.5px solid rgba(255,255,255,0.18);
+    color:var(--text-mute);
+  }
+  .step-node.filled{background:var(--int);border-color:var(--int);color:#14121A}
+  .step-node.error{background:var(--red);border-color:var(--red);color:#14121A}
+  .step-label{font-size:10px;color:var(--text-mute);margin-top:5px;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+  .step-line{
+    flex:1;height:2px;background:rgba(255,255,255,0.14);
+    margin:10px 4px 0;min-width:24px;
+  }
+  .step-line.active{background:var(--int)}
+  .stepper.frozen{
+    display:inline-block;margin-top:16px;
+    padding:6px 12px;border-radius:20px;
+    background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);
+  }
+  .stepper-frozen-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-mute);
+    letter-spacing:0.04em;
+  }
   .full-item-status{
     font-family:'JetBrains Mono',monospace;font-size:10px;
     padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.04em;
@@ -416,7 +447,40 @@ Promise.all([
   document.getElementById('doneCount').textContent = doneItems.length;
   document.getElementById('doneSub').textContent = `佔全部 ${actions.length} 項的 ${actions.length ? Math.round(doneItems.length/actions.length*100) : 0}%`;
 
-  // 行動清單總表：每一筆列出標題＋種類＋狀態
+  // 行動清單總表：每一筆列出標題＋種類＋狀態＋階段追蹤軸
+  function stepperHTML(status){
+    if(status === 'Frozen'){
+      return `
+        <div class="stepper frozen">
+          <div class="stepper-frozen-label">凍結 · 暫不推進</div>
+        </div>
+      `;
+    }
+    // 三站：未開始 → 進行中 → 完成；卡住＝進行中站變成錯誤
+    const stepDone = ['In Progress','Stuck','Done'].includes(status);
+    const stepMid = status === 'In Progress' || status === 'Stuck' || status === 'Done';
+    const midError = status === 'Stuck';
+    const stepEnd = status === 'Done';
+
+    const nodeHTML = (filled, label, icon, error) => `
+      <div class="step-node-wrap">
+        <div class="step-node ${filled ? (error ? 'error' : 'filled') : ''}">${icon}</div>
+        <div class="step-label">${label}</div>
+      </div>
+    `;
+    const lineClass = (active) => `step-line ${active ? 'active' : ''}`;
+
+    return `
+      <div class="stepper">
+        ${nodeHTML(true, '未開始', '✓', false)}
+        <div class="${lineClass(stepDone)}"></div>
+        ${nodeHTML(stepMid, '進行中', midError ? '✕' : (stepMid ? (stepEnd ? '✓' : '●') : ''), midError)}
+        <div class="${lineClass(stepEnd)}"></div>
+        ${nodeHTML(stepEnd, '完成', stepEnd ? '✓' : '', false)}
+      </div>
+    `;
+  }
+
   const fullList = document.getElementById('fullList');
   if(!actions.length){
     fullList.innerHTML = `<div class="empty-state">尚無行動清單資料。</div>`;
@@ -430,6 +494,7 @@ Promise.all([
             <div class="full-item-title">${a.Ext_Title || a.Action || '(未命名)'}</div>
             <div class="full-item-content">${a.Ext_Content || ''}</div>
             <div class="full-item-sub">${a.Category || '未分類'}</div>
+            ${stepperHTML(s)}
           </div>
           <span class="full-item-status ${STATUS_LABELS[s].cls}">${STATUS_LABELS[s].label}</span>
         </div>
