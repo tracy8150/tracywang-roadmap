@@ -9,231 +9,271 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#1E1719;
-    --bg-raise:#2A2224;
-    --card:#26202200 ;
-    --card-bg:#2A2224;
-    --text:#EDE7E8;
-    --text-soft:#B9AEB2;
-    --text-mute:#7C7176;
-    --purple:#C79BB0;
-    --purple-deep:#976189;
-    --purple-bg:#3A2A34;
-    --purple-int:#D9B8CB;
-    --purple-int-bg:#453040;
-    --green:#A9C97A;
-    --line:#3A3235;
+    --bg:#14121A;
+    --text:#F2EEF3;
+    --text-soft:#C3BCC9;
+    --text-mute:#8B8390;
+    --ext:#C99BD9;
+    --ext-glow:#9B6BC4;
+    --int:#8FC4D9;
+    --int-glow:#5B9FBF;
+    --amber:#E8B96A;
+    --line:rgba(255,255,255,0.14);
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
   body{
     background:var(--bg);
     color:var(--text);
     font-family:'Noto Sans TC',sans-serif;
     line-height:1.7;
-    padding:0 0 6rem;
+    overflow-x:hidden;
+    padding-bottom:6rem;
   }
+
+  .bg-blob{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(90px);
+    opacity:0.35;
+    z-index:0;
+    pointer-events:none;
+  }
+  .b1{width:600px;height:600px;background:var(--ext-glow);top:-10%;left:-10%}
+  .b2{width:500px;height:500px;background:var(--int-glow);top:35%;right:-15%}
+  .b3{width:450px;height:450px;background:var(--amber);bottom:-10%;left:20%;opacity:0.2}
+
   header{
-    max-width:920px;
+    position:relative;
+    z-index:1;
+    max-width:960px;
     margin:0 auto;
-    padding:4.5rem 24px 3rem;
-    border-bottom:1px solid var(--line);
+    padding:5rem 24px 3rem;
   }
   .eyebrow{
     font-family:'JetBrains Mono',monospace;
     font-size:12px;
     letter-spacing:0.14em;
-    color:var(--purple);
+    color:var(--amber);
     text-transform:uppercase;
     margin-bottom:1rem;
   }
   h1{
     font-family:'Noto Serif TC',serif;
     font-weight:700;
-    font-size:clamp(28px,5vw,44px);
-    line-height:1.35;
-    color:var(--text);
+    font-size:clamp(30px,5vw,46px);
+    background:linear-gradient(120deg,#F2EEF3 20%,var(--ext) 60%,var(--int) 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
   }
   .sub{
-    margin-top:1rem;
+    margin-top:1.2rem;
     color:var(--text-soft);
     font-size:15px;
     max-width:56ch;
   }
   .legend{
     display:flex;
-    gap:20px;
+    gap:24px;
     margin-top:2rem;
     font-size:13px;
     color:var(--text-mute);
   }
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .dot.ext{background:var(--purple-deep)}
-  .dot.int{background:var(--purple-int)}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot.ext{background:var(--ext);box-shadow:0 0 12px var(--ext-glow)}
+  .dot.int{background:var(--int);box-shadow:0 0 12px var(--int-glow)}
 
-  main{max-width:920px;margin:0 auto;padding:0 24px}
-  #status{
-    font-family:'JetBrains Mono',monospace;
-    font-size:13px;
-    color:var(--text-mute);
-    padding:3rem 0;
-  }
-
-  .row{
-    display:grid;
-    grid-template-columns:88px 1fr;
-    gap:0 20px;
+  .timeline{
     position:relative;
-    padding-bottom:2.5rem;
-  }
-  .row::before{
-    content:'';
-    position:absolute;
-    left:92px;
-    top:6px;
-    bottom:-2.5rem;
-    width:1px;
-    background:var(--line);
-  }
-  .row:last-child::before{display:none}
-  .rail{position:relative}
-  .time{
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    color:var(--text-mute);
-    padding-top:4px;
-  }
-  .period{
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;
-    color:var(--purple);
-    margin-top:4px;
-    letter-spacing:0.04em;
-  }
-  .stamp{
-    position:absolute;
-    left:88px;
-    top:2px;
-    transform:translateX(-50%);
-    width:11px;
-    height:11px;
-    border-radius:50%;
-    background:var(--purple-deep);
-    border:2px solid var(--bg);
     z-index:1;
+    max-width:960px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  .spine{
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:1px;
+    background:linear-gradient(180deg, transparent, var(--line) 6%, var(--line) 94%, transparent);
+    transform:translateX(-50%);
   }
 
-  .cols{
+  .node{
+    position:relative;
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
+    grid-template-columns:1fr 120px 1fr;
+    align-items:start;
+    margin-bottom:3.5rem;
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
   }
-  .col{
-    background:var(--card-bg);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:18px 20px;
-  }
-  .col.empty{
-    background:transparent;
-    border:1px dashed var(--line);
+  .node.visible{opacity:1;transform:translateY(0)}
+
+  .center{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    justify-content:center;
+    padding-top:6px;
+  }
+  .center .stamp{
+    width:12px;height:12px;
+    border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 16px var(--amber);
+    z-index:2;
+  }
+  .center .time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-mute);
+    margin-top:10px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .center .period{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:var(--amber);
+    margin-top:4px;
+    letter-spacing:0.05em;
+  }
+
+  .side.left{display:flex;justify-content:flex-end}
+  .side.right{display:flex;justify-content:flex-start}
+
+  .connector{
+    position:absolute;
+    top:16px;
+    height:1px;
+    background:var(--line);
+    width:24px;
+  }
+  .side.left .connector{right:-24px}
+  .side.right .connector{left:-24px}
+
+  .glass{
+    position:relative;
+    width:100%;
+    max-width:340px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:20px 22px;
+    transition:transform 0.3s ease, border-color 0.3s ease;
+  }
+  .glass:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.22)}
+  .glass.ext{box-shadow:0 8px 32px rgba(155,107,196,0.15)}
+  .glass.int{box-shadow:0 8px 32px rgba(91,159,191,0.15)}
+  .glass.empty{
+    background:rgba(255,255,255,0.02);
+    border:1px dashed rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
     color:var(--text-mute);
     font-size:12px;
     font-family:'JetBrains Mono',monospace;
+    min-height:80px;
   }
-  .col-tag{
+
+  .tag{
     font-family:'JetBrains Mono',monospace;
     font-size:10px;
     letter-spacing:0.08em;
     text-transform:uppercase;
-    padding:2px 8px;
+    padding:3px 10px;
     border-radius:20px;
     display:inline-block;
-    margin-bottom:10px;
+    margin-bottom:12px;
   }
-  .col-tag.ext{background:var(--purple-bg);color:var(--purple)}
-  .col-tag.int{background:var(--purple-int-bg);color:var(--purple-int)}
+  .tag.ext{background:rgba(201,155,217,0.15);color:var(--ext)}
+  .tag.int{background:rgba(143,196,217,0.15);color:var(--int)}
 
-  .col h3{
+  .glass h3{
     font-family:'Noto Serif TC',serif;
     font-weight:600;
     font-size:16px;
     margin-bottom:8px;
-    color:var(--text);
     cursor:pointer;
   }
-  .col h3:hover{color:var(--purple-int)}
-  .col p{
-    font-size:13.5px;
-    color:var(--text-soft);
-  }
+  .glass.ext h3:hover{color:var(--ext)}
+  .glass.int h3:hover{color:var(--int)}
+  .glass p{font-size:13px;color:var(--text-soft)}
   .read-more{
     display:inline-block;
     margin-top:10px;
     font-family:'JetBrains Mono',monospace;
     font-size:11px;
-    color:var(--purple);
     text-decoration:none;
-    border-bottom:1px solid transparent;
   }
-  .read-more:hover{border-bottom-color:var(--purple)}
+  .glass.ext .read-more{color:var(--ext)}
+  .glass.int .read-more{color:var(--int)}
 
-  .actions{
+  .actions-wrap{
+    grid-column:1 / -1;
+    display:flex;
+    justify-content:center;
     margin-top:1rem;
-    background:var(--bg-raise);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:14px 18px;
+  }
+  .actions{
+    width:100%;
+    max-width:420px;
+    background:rgba(232,185,106,0.06);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(232,185,106,0.2);
+    border-radius:14px;
+    padding:14px 20px;
   }
   .actions-label{
     font-family:'JetBrains Mono',monospace;
     font-size:10px;
-    color:var(--text-mute);
+    color:var(--amber);
     letter-spacing:0.08em;
     text-transform:uppercase;
     margin-bottom:8px;
   }
   .action-item{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:13px;
-    color:var(--text-soft);
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;color:var(--text-soft);
     padding:5px 0;
   }
   .action-item.done{color:var(--text-mute);text-decoration:line-through}
   .checkbox{
-    width:16px;height:16px;
-    border-radius:4px;
-    border:1.5px solid var(--purple);
+    width:16px;height:16px;border-radius:5px;
+    border:1.5px solid var(--amber);
     flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
   }
-  .checkbox.checked{background:var(--green);border-color:var(--green)}
-  .checkbox.checked::after{content:'✓';font-size:11px;color:#1E1719;line-height:1}
+  .checkbox.checked{background:var(--amber);border-color:var(--amber)}
+  .checkbox.checked::after{content:'✓';font-size:11px;color:#14121A;line-height:1}
 
-  @media (max-width:640px){
-    .cols{grid-template-columns:1fr}
-    .row{grid-template-columns:64px 1fr;gap:0 12px}
-    .row::before{left:68px}
-    .stamp{left:64px}
+  @media (max-width:760px){
+    .node{grid-template-columns:1fr;gap:10px}
+    .center{flex-direction:row;justify-content:flex-start;gap:10px;padding-top:0}
+    .glass{max-width:none}
+    .connector{display:none}
+    .spine{left:6px}
+    .center .stamp{margin-top:4px}
   }
 
   footer{
-    max-width:920px;
-    margin:3rem auto 0;
-    padding:2rem 24px 0;
-    border-top:1px solid var(--line);
-    font-size:12px;
-    color:var(--text-mute);
+    position:relative;z-index:1;
+    max-width:960px;margin:3rem auto 0;padding:2rem 24px 0;
+    font-size:12px;color:var(--text-mute);
     font-family:'JetBrains Mono',monospace;
   }
 </style>
 </head>
 <body>
+
+<div class="bg-blob b1"></div>
+<div class="bg-blob b2"></div>
+<div class="bg-blob b3"></div>
 
 <header>
   <div class="eyebrow">Personal Roadmap · Living Document</div>
@@ -245,14 +285,12 @@
   </div>
 </header>
 
-<main>
-  <div id="status">讀取資料中...</div>
-  <div id="timeline"></div>
-</main>
+<div class="timeline">
+  <div class="spine"></div>
+  <div id="nodes"></div>
+</div>
 
-<footer>
-  資料來源：Google Sheets，即時同步。
-</footer>
+<footer></footer>
 
 <script>
 const SHEET_ID = '1FC4GitJvxBG0dNQorjmMXvPk4iFa8rdIqZB7oUPMAUs';
@@ -262,7 +300,6 @@ const ACTIONS_GID = '387283646';
 function csvUrl(gid){
   return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
 }
-
 function parseCSV(text){
   const rows = [];
   let row = [], field = '', inQuotes = false;
@@ -284,7 +321,6 @@ function parseCSV(text){
   if(field.length || row.length){ row.push(field); rows.push(row); }
   return rows.filter(r => r.some(v => v && v.trim().length));
 }
-
 function rowsToObjects(rows){
   const [header, ...data] = rows;
   return data.map(r => {
@@ -294,17 +330,16 @@ function rowsToObjects(rows){
   });
 }
 
-function colHTML(id, tag, title, content, hasContent){
-  if(!title && !content){
-    return `<div class="col empty">尚無紀錄</div>`;
+function sideHTML(id, tag, title, content){
+  if(!title){
+    return `<div class="glass empty">尚無紀錄</div>`;
   }
-  const linkAttrs = hasContent ? `onclick="location.href='post.html?id=${encodeURIComponent(id)}'"` : '';
   return `
-    <div class="col">
-      <span class="col-tag ${tag}">${tag === 'ext' ? '外部事件' : '內在影響'}</span>
-      <h3 ${linkAttrs}>${title}</h3>
+    <div class="glass ${tag}">
+      <span class="tag ${tag}">${tag === 'ext' ? '外部事件' : '內在影響'}</span>
+      <h3 onclick="location.href='post.html?id=${encodeURIComponent(id)}'">${title}</h3>
       <p>${content}</p>
-      ${hasContent ? `<a class="read-more" href="post.html?id=${encodeURIComponent(id)}">閱讀全文 →</a>` : ''}
+      <a class="read-more" href="post.html?id=${encodeURIComponent(id)}">閱讀全文 →</a>
     </div>
   `;
 }
@@ -313,15 +348,17 @@ function actionsHTML(eventId, actionsById){
   const list = actionsById[eventId];
   if(!list || !list.length) return '';
   return `
-    <div class="actions">
-      <div class="actions-label">行動清單</div>
-      ${list.map(a => {
-        const done = (a.Done || '').trim().toUpperCase() === 'TRUE';
-        return `<div class="action-item ${done ? 'done' : ''}">
-          <span class="checkbox ${done ? 'checked' : ''}"></span>
-          <span>${a.Action}</span>
-        </div>`;
-      }).join('')}
+    <div class="actions-wrap">
+      <div class="actions">
+        <div class="actions-label">行動清單</div>
+        ${list.map(a => {
+          const done = (a.Done || '').trim().toUpperCase() === 'TRUE';
+          return `<div class="action-item ${done ? 'done' : ''}">
+            <span class="checkbox ${done ? 'checked' : ''}"></span>
+            <span>${a.Action}</span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
   `;
 }
@@ -341,43 +378,43 @@ Promise.all([
     actionsById[id].push(a);
   });
 
-  const status = document.getElementById('status');
-  const timeline = document.getElementById('timeline');
-
-  if(!events.length){
-    status.textContent = '目前表格裡還沒有資料。';
-    return;
-  }
-  status.style.display = 'none';
-
-  timeline.innerHTML = events.map(ev => {
+  const nodes = document.getElementById('nodes');
+  nodes.innerHTML = events.map(ev => {
     const id = (ev.ID || '').trim();
-    const extId = `${id}-ext`;
-    const intId = `${id}-int`;
     return `
-      <div class="row">
-        <div class="rail">
+      <div class="node">
+        <div class="side left">
+          <div class="connector"></div>
+          ${sideHTML(`${id}-ext`, 'ext', ev.Ext_Title, ev.Ext_Content)}
+        </div>
+        <div class="center">
+          <div class="stamp"></div>
           <div class="time">${ev.Time || ''}</div>
           <div class="period">${ev.Period || ''}</div>
-          <div class="stamp"></div>
         </div>
-        <div>
-          <div class="cols">
-            ${colHTML(extId, 'ext', ev.Ext_Title, ev.Ext_Content, !!ev.Ext_Title)}
-            ${colHTML(intId, 'int', ev.Int_Title, ev.Int_Content, !!ev.Int_Title)}
-          </div>
-          ${actionsHTML(id, actionsById)}
+        <div class="side right">
+          <div class="connector"></div>
+          ${sideHTML(`${id}-int`, 'int', ev.Int_Title, ev.Int_Content)}
         </div>
+        ${actionsHTML(id, actionsById)}
       </div>
     `;
   }).join('');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.node').forEach(n => observer.observe(n));
 }).catch(err => {
-  document.getElementById('status').innerHTML =
-    '讀取失敗：' + err.message +
-    '<br>請確認 Google Sheets 的共用設定為「知道連結的使用者均可查看」。';
+  document.getElementById('nodes').innerHTML =
+    `<p style="color:var(--text-mute);font-family:'JetBrains Mono',monospace;font-size:13px">讀取失敗：${err.message}</p>`;
 });
 </script>
 
 </body>
 </html>
-
