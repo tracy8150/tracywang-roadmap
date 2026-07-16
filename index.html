@@ -121,25 +121,29 @@
     padding-top:6px;
   }
   .center .stamp{
-    width:12px;height:12px;
+    width:20px;height:20px;
     border-radius:50%;
-    background:var(--amber);
-    box-shadow:0 0 16px var(--amber);
+    background:var(--text-mute);
     z-index:2;
+  }
+  .center .stamp.current{
+    background:var(--amber);
+    box-shadow:0 0 22px var(--amber), 0 0 0 4px rgba(232,185,106,0.15);
   }
   .center .time{
     font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    color:var(--text-mute);
+    font-weight:700;
+    font-size:17px;
+    color:var(--text);
     margin-top:10px;
     text-align:center;
     white-space:nowrap;
   }
   .center .period{
     font-family:'JetBrains Mono',monospace;
-    font-size:9px;
+    font-size:10px;
     color:var(--amber);
-    margin-top:4px;
+    margin-top:5px;
     letter-spacing:0.05em;
   }
 
@@ -155,6 +159,53 @@
   }
   .side.left .connector{right:-24px}
   .side.right .connector{left:-24px}
+
+  .combo{
+    position:relative;
+    width:100%;
+    max-width:340px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:20px 22px;
+    transition:transform 0.3s ease, border-color 0.3s ease;
+  }
+  .combo:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.22)}
+  .combo-block + .combo-block{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .combo-block h3{
+    font-family:'Noto Serif TC',serif;
+    font-weight:600;
+    font-size:15px;
+    margin:10px 0 6px;
+    cursor:pointer;
+  }
+  .combo-block.ext h3:hover{color:var(--ext)}
+  .combo-block.int h3:hover{color:var(--int)}
+  .combo-block p{font-size:13px;color:var(--text-soft)}
+  .combo .read-more{
+    display:inline-block;
+    margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    text-decoration:none;
+  }
+  .combo-block.ext .read-more{color:var(--ext)}
+  .combo-block.int .read-more{color:var(--int)}
+  .combo.empty{
+    background:rgba(255,255,255,0.02);
+    border:1px dashed rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-mute);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    min-height:80px;
+  }
 
   .glass{
     position:relative;
@@ -214,20 +265,27 @@
   .glass.ext .read-more{color:var(--ext)}
   .glass.int .read-more{color:var(--int)}
 
-  .actions-wrap{
-    grid-column:1 / -1;
-    display:flex;
-    justify-content:center;
-    margin-top:1rem;
-  }
+
   .actions{
+    position:relative;
     width:100%;
-    max-width:420px;
-    background:rgba(232,185,106,0.06);
-    backdrop-filter:blur(14px);
-    border:1px solid rgba(232,185,106,0.2);
-    border-radius:14px;
-    padding:14px 20px;
+    max-width:340px;
+    background:rgba(232,185,106,0.07);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(232,185,106,0.22);
+    border-radius:16px;
+    padding:20px 22px;
+    box-shadow:0 8px 32px rgba(232,185,106,0.1);
+  }
+  .actions.empty{
+    background:rgba(255,255,255,0.02);
+    border:1px dashed rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-mute);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    min-height:80px;
   }
   .actions-label{
     font-family:'JetBrains Mono',monospace;
@@ -278,7 +336,7 @@
 <header>
   <div class="eyebrow">Personal Roadmap · Living Document</div>
   <h1>老脆的人生roadmap</h1>
-  <p class="sub">持續更新的個人時間軸——左邊是外部發生的事件，右邊是同一時間點的內在轉折，兩者不一定同時存在。</p>
+  <p class="sub">持續更新的個人時間軸——左邊是每個時間點發生的事，區分外部事件與內在影響；右邊是對應的復盤行動清單。</p>
   <div class="legend">
     <span><i class="dot ext"></i>外部事件</span>
     <span><i class="dot int"></i>內在影響</span>
@@ -330,12 +388,10 @@ function rowsToObjects(rows){
   });
 }
 
-function sideHTML(id, tag, title, content){
-  if(!title){
-    return `<div class="glass empty">尚無紀錄</div>`;
-  }
+function comboBlock(id, tag, title, content){
+  if(!title) return '';
   return `
-    <div class="glass ${tag}">
+    <div class="combo-block ${tag}">
       <span class="tag ${tag}">${tag === 'ext' ? '外部事件' : '內在影響'}</span>
       <h3 onclick="location.href='post.html?id=${encodeURIComponent(id)}'">${title}</h3>
       <p>${content}</p>
@@ -344,21 +400,29 @@ function sideHTML(id, tag, title, content){
   `;
 }
 
+function comboHTML(ev){
+  const id = (ev.ID || '').trim();
+  const blocks = comboBlock(`${id}-ext`, 'ext', ev.Ext_Title, ev.Ext_Content)
+    + comboBlock(`${id}-int`, 'int', ev.Int_Title, ev.Int_Content);
+  if(!blocks) return `<div class="combo empty">尚無紀錄</div>`;
+  return `<div class="combo">${blocks}</div>`;
+}
+
 function actionsHTML(eventId, actionsById){
   const list = actionsById[eventId];
-  if(!list || !list.length) return '';
+  if(!list || !list.length){
+    return `<div class="actions empty">尚無行動清單</div>`;
+  }
   return `
-    <div class="actions-wrap">
-      <div class="actions">
-        <div class="actions-label">行動清單</div>
-        ${list.map(a => {
-          const done = (a.Done || '').trim().toUpperCase() === 'TRUE';
-          return `<div class="action-item ${done ? 'done' : ''}">
-            <span class="checkbox ${done ? 'checked' : ''}"></span>
-            <span>${a.Action}</span>
-          </div>`;
-        }).join('')}
-      </div>
+    <div class="actions">
+      <div class="actions-label">復盤後行動清單</div>
+      ${list.map(a => {
+        const done = (a.Done || '').trim().toUpperCase() === 'TRUE';
+        return `<div class="action-item ${done ? 'done' : ''}">
+          <span class="checkbox ${done ? 'checked' : ''}"></span>
+          <span>${a.Action}</span>
+        </div>`;
+      }).join('')}
     </div>
   `;
 }
@@ -379,24 +443,25 @@ Promise.all([
   });
 
   const nodes = document.getElementById('nodes');
-  nodes.innerHTML = events.map(ev => {
+  const lastIndex = events.length - 1;
+  nodes.innerHTML = events.map((ev, i) => {
     const id = (ev.ID || '').trim();
+    const isCurrent = i === lastIndex;
     return `
       <div class="node">
         <div class="side left">
           <div class="connector"></div>
-          ${sideHTML(`${id}-ext`, 'ext', ev.Ext_Title, ev.Ext_Content)}
+          ${comboHTML(ev)}
         </div>
         <div class="center">
-          <div class="stamp"></div>
+          <div class="stamp ${isCurrent ? 'current' : ''}"></div>
           <div class="time">${ev.Time || ''}</div>
           <div class="period">${ev.Period || ''}</div>
         </div>
         <div class="side right">
           <div class="connector"></div>
-          ${sideHTML(`${id}-int`, 'int', ev.Int_Title, ev.Int_Content)}
+          ${actionsHTML(id, actionsById)}
         </div>
-        ${actionsHTML(id, actionsById)}
       </div>
     `;
   }).join('');
