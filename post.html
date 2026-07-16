@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老脆的人生roadmap · 內文</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1E1719;
+    --text:#EDE7E8;
+    --text-soft:#B9AEB2;
+    --text-mute:#7C7176;
+    --purple:#C79BB0;
+    --line:#3A3235;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans TC',sans-serif;
+    line-height:1.85;
+    padding:0 0 6rem;
+  }
+  .wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:4rem 24px 0;
+  }
+  .back{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--purple);
+    text-decoration:none;
+    margin-bottom:2.5rem;
+  }
+  .back:hover{text-decoration:underline}
+  h1{
+    font-family:'Noto Serif TC',serif;
+    font-weight:700;
+    font-size:clamp(26px,4.5vw,36px);
+    line-height:1.4;
+    margin-bottom:2rem;
+    padding-bottom:2rem;
+    border-bottom:1px solid var(--line);
+  }
+  #content{
+    font-size:16px;
+    color:var(--text-soft);
+    white-space:pre-wrap;
+  }
+  #status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--text-mute);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← 回到roadmap</a>
+  <h1 id="title">讀取中...</h1>
+  <div id="status"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+const SHEET_ID = '1FC4GitJvxBG0dNQorjmMXvPk4iFa8rdIqZB7oUPMAUs';
+const POSTS_GID = '1388296368';
+
+function csvUrl(gid){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field+='"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\n' || c === '\r'){
+        if(c==='\r' && next==='\n') i++;
+        row.push(field); rows.push(row); row=[]; field='';
+      } else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(v => v && v.trim().length));
+}
+
+function rowsToObjects(rows){
+  const [header, ...data] = rows;
+  return data.map(r => {
+    const obj = {};
+    header.forEach((h,i) => obj[h] = r[i] || '');
+    return obj;
+  });
+}
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id');
+const titleEl = document.getElementById('title');
+const contentEl = document.getElementById('content');
+const statusEl = document.getElementById('status');
+
+if(!id){
+  titleEl.textContent = '找不到這篇內容';
+  statusEl.textContent = '網址缺少文章ID。';
+} else {
+  fetch(csvUrl(POSTS_GID))
+    .then(r => r.text())
+    .then(text => {
+      const posts = rowsToObjects(parseCSV(text));
+      const post = posts.find(p => (p.ID || '').trim() === id.trim());
+      if(!post){
+        titleEl.textContent = '這篇還沒寫';
+        statusEl.textContent = '尚未在Posts分頁中新增這篇內容。';
+        return;
+      }
+      titleEl.textContent = post.title || post.Title || '（尚未命名）';
+      contentEl.textContent = post.Content || '（內容尚未撰寫）';
+    })
+    .catch(err => {
+      titleEl.textContent = '讀取失敗';
+      statusEl.textContent = err.message;
+    });
+}
+</script>
+</body>
+</html>
