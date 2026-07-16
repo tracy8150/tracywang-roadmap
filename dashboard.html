@@ -94,7 +94,7 @@
 
   .stepper{
     display:flex;align-items:flex-start;margin-top:16px;
-    max-width:280px;
+    max-width:360px;
   }
   .step-node-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
   .step-node{
@@ -105,14 +105,17 @@
     border:1.5px solid rgba(255,255,255,0.18);
     color:var(--text-mute);
   }
-  .step-node.filled{background:var(--int);border-color:var(--int);color:#14121A}
-  .step-node.error{background:var(--red);border-color:var(--red);color:#14121A}
+  .step-node.blue{background:var(--int);border-color:var(--int);color:#14121A}
+  .step-node.red{background:var(--red);border-color:var(--red);color:#14121A}
+  .step-node.green{background:var(--green);border-color:var(--green);color:#14121A}
   .step-label{font-size:10px;color:var(--text-mute);margin-top:5px;font-family:'JetBrains Mono',monospace;white-space:nowrap}
   .step-line{
     flex:1;height:2px;background:rgba(255,255,255,0.14);
     margin:10px 4px 0;min-width:24px;
   }
-  .step-line.active{background:var(--int)}
+  .step-line.blue{background:var(--int)}
+  .step-line.red{background:var(--red)}
+  .step-line.green{background:var(--green)}
   .stepper.frozen{
     display:inline-block;margin-top:16px;
     padding:6px 12px;border-radius:20px;
@@ -447,7 +450,7 @@ Promise.all([
   document.getElementById('doneCount').textContent = doneItems.length;
   document.getElementById('doneSub').textContent = `佔全部 ${actions.length} 項的 ${actions.length ? Math.round(doneItems.length/actions.length*100) : 0}%`;
 
-  // 行動清單總表：每一筆列出標題＋種類＋狀態＋階段追蹤軸
+  // 行動清單總表：每一筆列出標題＋種類＋狀態＋四站式追蹤軸
   function stepperHTML(status){
     if(status === 'Frozen'){
       return `
@@ -456,29 +459,32 @@ Promise.all([
         </div>
       `;
     }
-    // 三站：未開始 → 進行中 → 完成；卡住＝進行中站變成錯誤
-    const stepDone = ['In Progress','Stuck','Done'].includes(status);
-    const stepMid = status === 'In Progress' || status === 'Stuck' || status === 'Done';
-    const midError = status === 'Stuck';
-    const stepEnd = status === 'Done';
 
-    const nodeHTML = (filled, label, icon, error) => `
-      <div class="step-node-wrap">
-        <div class="step-node ${filled ? (error ? 'error' : 'filled') : ''}">${icon}</div>
-        <div class="step-label">${label}</div>
-      </div>
-    `;
-    const lineClass = (active) => `step-line ${active ? 'active' : ''}`;
+    const stations = ['未開始','進行中','卡住','完成'];
+    let colorClass, filledCount;
+    if(status === 'Done'){ colorClass = 'green'; filledCount = 4; }
+    else if(status === 'Stuck'){ colorClass = 'red'; filledCount = 3; }
+    else if(status === 'In Progress'){ colorClass = 'blue'; filledCount = 2; }
+    else { colorClass = 'blue'; filledCount = 1; } // Not Started
 
-    return `
-      <div class="stepper">
-        ${nodeHTML(true, '未開始', '✓', false)}
-        <div class="${lineClass(stepDone)}"></div>
-        ${nodeHTML(stepMid, '進行中', midError ? '✕' : (stepMid ? (stepEnd ? '✓' : '●') : ''), midError)}
-        <div class="${lineClass(stepEnd)}"></div>
-        ${nodeHTML(stepEnd, '完成', stepEnd ? '✓' : '', false)}
-      </div>
-    `;
+    let nodesHTML = '';
+    stations.forEach((label, i) => {
+      const filled = i < filledCount;
+      const isLastFilled = i === filledCount - 1;
+      const icon = filled ? (status === 'Stuck' && isLastFilled ? '✕' : '✓') : '';
+      nodesHTML += `
+        <div class="step-node-wrap">
+          <div class="step-node ${filled ? colorClass : ''}">${icon}</div>
+          <div class="step-label">${label}</div>
+        </div>
+      `;
+      if(i < stations.length - 1){
+        const lineActive = i < filledCount - 1;
+        nodesHTML += `<div class="step-line ${lineActive ? colorClass : ''}"></div>`;
+      }
+    });
+
+    return `<div class="stepper">${nodesHTML}</div>`;
   }
 
   const fullList = document.getElementById('fullList');
