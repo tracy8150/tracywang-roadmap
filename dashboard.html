@@ -76,12 +76,12 @@
 
   .full-list{display:flex;flex-direction:column;gap:10px}
   .full-item{
-    display:flex;align-items:center;gap:14px;
+    display:flex;align-items:flex-start;gap:14px;
     background:rgba(255,255,255,0.03);
     border:1px solid rgba(255,255,255,0.08);
-    border-radius:12px;padding:14px 18px;
+    border-radius:12px;padding:16px 18px;
   }
-  .full-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .full-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
   .full-item-dot.done{background:var(--green)}
   .full-item-dot.progress{background:var(--int)}
   .full-item-dot.stuck{background:var(--red);box-shadow:0 0 10px var(--red)}
@@ -89,7 +89,8 @@
   .full-item-dot.frozen{background:rgba(255,255,255,0.3)}
   .full-item-body{flex:1}
   .full-item-title{font-family:'Noto Serif TC',serif;font-weight:600;font-size:15px}
-  .full-item-sub{font-size:12px;color:var(--text-mute);margin-top:3px}
+  .full-item-content{font-size:13px;color:var(--text-soft);margin-top:6px;line-height:1.6}
+  .full-item-sub{font-size:12px;color:var(--text-mute);margin-top:8px}
   .full-item-status{
     font-family:'JetBrains Mono',monospace;font-size:10px;
     padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.04em;
@@ -391,7 +392,7 @@ Promise.all([
     stuckList.innerHTML = stuck.map(a => `
       <div class="stuck-item">
         <span class="stuck-dot"></span>
-        <span class="stuck-text"><span class="stuck-cat">${a.Category || '未分類'}</span>${a.Action}</span>
+        <span class="stuck-text"><span class="stuck-cat">${a.Category || '未分類'}</span>${a.Ext_Title || a.Action || '(未命名)'}</span>
       </div>
     `).join('');
   }
@@ -426,7 +427,8 @@ Promise.all([
         <div class="full-item">
           <span class="full-item-dot ${STATUS_LABELS[s].cls}"></span>
           <div class="full-item-body">
-            <div class="full-item-title">${a.Action}</div>
+            <div class="full-item-title">${a.Ext_Title || a.Action || '(未命名)'}</div>
+            <div class="full-item-content">${a.Ext_Content || ''}</div>
             <div class="full-item-sub">${a.Category || '未分類'}</div>
           </div>
           <span class="full-item-status ${STATUS_LABELS[s].cls}">${STATUS_LABELS[s].label}</span>
